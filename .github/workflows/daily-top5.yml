@@ -1,0 +1,37 @@
+name: 📈 每日 GitHub 飙升 Top5
+
+on:
+  schedule:
+    - cron: '0 8 * * *'        # 每天 UTC 8:00（北京时间下午 16:00）运行
+  workflow_dispatch:           # 允许你手动点击运行测试
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: 安装依赖
+      run: |
+        pip install requests beautifulsoup4 httpx
+
+    - name: 运行 Top5 脚本
+      env:
+        LLM_API_KEY: ${{ secrets.LLM_API_KEY }}   # 这里会读取你配置的密钥
+        LLM_MODEL: "deepseek-chat"                # 根据你用的模型改
+      run: python daily_top5.py
+
+    - name: 提交结果到仓库（可选）
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add -A
+        git commit -m "Update daily GitHub Top5 $(date +'%Y-%m-%d')" || echo "No changes"
+        git push
